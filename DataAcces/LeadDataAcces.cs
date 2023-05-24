@@ -15,9 +15,11 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
         public LeadDataAcces(IDataBaseConnectionFactory dataBaseConnection) { 
             _dataBaseConnection = dataBaseConnection;
         }
-        public async Task<int>  AddLead(Data lead) {
+        public async Task<string>  AddLead(Data lead) {
+            string respuesta = "";
             try
             {
+                
                 int id_log = -1;
                 using (var connection = _dataBaseConnection.GetDbConnection())
                 {
@@ -43,13 +45,13 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                         id_log = parameters.Get<int>("@idLog");
                         
                     }
-                    return id_log;
+                    return respuesta;
 
                 }
             }
             catch (Exception)
             {
-
+                return respuesta = "Campos obligatorios sin informar o mal informados.";
                 throw;
             }
         }
