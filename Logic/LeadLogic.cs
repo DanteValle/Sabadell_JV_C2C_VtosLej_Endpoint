@@ -11,7 +11,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Logic
         public LeadLogic(ILeadDataAcces leadDataAcces) { 
             _leadDataAcces = leadDataAcces;
         }
-       public async Task<int> Agregar_lead(Data lead) {
+       public async Task<string> Agregar_lead(Data lead) {
 
             var response = await _leadDataAcces.AddLead(lead);
 
