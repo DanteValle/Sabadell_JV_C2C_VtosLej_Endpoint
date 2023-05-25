@@ -14,6 +14,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<ILeadDataAcces, LeadDataAcces>();
 builder.Services.AddSingleton<ILeadLogic, LeadLogic>();
 builder.Services.AddSingleton<IDataBaseConnectionFactory, DataBaseConnectionFactory>();
+builder.Services.AddSingleton<IValidation, Validation>();
 
 
 

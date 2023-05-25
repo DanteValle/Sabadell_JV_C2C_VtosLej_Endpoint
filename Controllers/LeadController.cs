@@ -34,6 +34,8 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Controllers
         public async Task<string> AgregarLeads(Data data) {
             try
             {
+                //LogMessage("llego:" + data.Leads[0].NOMBRE);
+
                 var response = await _leadLogic.Agregar_lead(data);
 
                 return response;
@@ -42,6 +44,26 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Controllers
             {
 
                 throw;
+            }
+        }
+
+        static void LogMessage(string message)
+        {
+            string logFolderPath = "Log"; // Especifica el nombre de la carpeta "Log" dentro de tu proyecto
+            string fileName = "archivo.txt"; // Especifica el nombre del archivo
+
+            // Combina la ruta de la carpeta de logs y el nombre del archivo
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, logFolderPath, fileName);
+            // Obtiene la fecha y hora actual para incluir en el mensaje de log
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+            // Construye el mensaje de log con la fecha, hora y el mensaje proporcionado
+            string logMessage = $"[{timestamp}] {message}";
+
+            // Escribe el mensaje de log en el archivo
+            using (StreamWriter writer = new StreamWriter(filePath, true))
+            {
+                writer.WriteLine(logMessage);
             }
         }
     }
