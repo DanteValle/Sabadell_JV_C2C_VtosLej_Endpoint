@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
+using FluentValidation.Results;
+using Microsoft.AspNetCore.Mvc;
 using Sabadell_JV_C2C_VtosLej_Endpoint.Logic.Interface;
 using Sabadell_JV_C2C_VtosLej_Endpoint.Models;
+
 
 namespace Sabadell_JV_C2C_VtosLej_Endpoint.Logic
 {
@@ -8,20 +11,29 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Logic
     {
         public ILeadDataAcces _leadDataAcces;
 
-        public IValidation _validation;
+        public IValidator<Data> _validator;
 
-        public LeadLogic(ILeadDataAcces leadDataAcces, IValidation validation) { 
+        public LeadLogic(ILeadDataAcces leadDataAcces, IValidator<Data> validator) { 
             _leadDataAcces = leadDataAcces;
-            _validation = validation;
+            _validator = validator;
         }
-       public string response = "no añadido";
-       public async Task<string> Agregar_lead(Data lead) {
-            var validation = await _validation.ValidateLeads(lead);
-            if (validation) {
-                response = await _leadDataAcces.AddLead(lead);
-                return response = "añadido correctamente";
+        public string GetValidationMessage(Data data)
+        {
+            ValidationResult result = _validator.Validate(data);
+            string validationMessage = string.Join(", ", result.Errors.Select(error => error.ErrorMessage));
+            return validationMessage;
+        }
+        public async Task<List<int>> AddLeads(Data data) {
+            try
+            {
+                var response = await _leadDataAcces.AddLead(data);
+                return response;
             }
-            return response;
+            catch (Exception)
+            {
+
+                throw;
+            }
             
                  
         }

@@ -13,7 +13,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Models
         public string? PRODUCTO { get; set; }
         public string? TELEFONO { get; set; }
         public string? IDIOMA { get; set; }
-        public string? MES_NACIMIENTO { get; set; }
+        public string? MES_DEL_VENCIMIENTO { get; set; }
         public string? DEPARTAMENTO { get; set; }
     }
 }

@@ -15,12 +15,11 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
         public LeadDataAcces(IDataBaseConnectionFactory dataBaseConnection) { 
             _dataBaseConnection = dataBaseConnection;
         }
-        public async Task<string>  AddLead(Data lead) {
-            string respuesta = "";
+        public async Task<List<int>>AddLead(Data lead) {
             try
             {
                 
-                int id_log = -1;
+                List<int> listIds = new List<int>();
                 using (var connection = _dataBaseConnection.GetDbConnection())
                 {
                     foreach (var item in lead.Leads)
@@ -36,22 +35,21 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                         parameters.Add("@Producto", item.PRODUCTO, DbType.String);
                         parameters.Add("@Telefono", item.TELEFONO, DbType.String);
                         parameters.Add("@Idioma", item.IDIOMA, DbType.String);
-                        parameters.Add("@MesDelVencimiento", item.MES_NACIMIENTO, DbType.String);
+                        parameters.Add("@MesDelVencimiento", item.MES_DEL_VENCIMIENTO, DbType.String);
                         parameters.Add("@Departamento", item.DEPARTAMENTO, DbType.String);
                         parameters.Add("@idLog", DbType.Int32, direction: ParameterDirection.Output);
 
                         await connection.ExecuteAsync("WS_C2C_VtoLej_LOG ", parameters, commandType: CommandType.StoredProcedure);
 
-                        id_log = parameters.Get<int>("@idLog");
+                         listIds.Add(parameters.Get<int>("@idLog"));
                         
                     }
-                    return respuesta;
+                    return listIds;
 
                 }
             }
             catch (Exception)
             {
-                return respuesta = "Campos obligatorios sin informar o mal informados.";
                 throw;
             }
         }
