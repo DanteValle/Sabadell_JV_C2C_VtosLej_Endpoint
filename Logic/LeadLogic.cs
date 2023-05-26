@@ -29,13 +29,15 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Logic
         {
             try
             {
+                WriteLog(data, "C2C", "INGRESO NORMAL");
                 var response = await _leadDataAcces.AddLead(data);
+                WriteLog(data, "C2C", "despues de bd:"+response);
                 response.ForEach(x => WriteLog(null, "INFO", " Tablas de negocio alimentadas " + x));
                 return response;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                WriteLog(null, "C2C",ex.ToString());
                 throw;
             }
 
