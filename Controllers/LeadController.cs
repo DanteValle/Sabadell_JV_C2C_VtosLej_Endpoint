@@ -35,11 +35,12 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Controllers
             try
             {
                 //LogMessage("llego:" + data.Leads[0].NOMBRE);
-
+                _leadLogic.WriteLog(null, "C2C", "Inicio C2C");
                 string validationMessage = _leadLogic.GetValidationMessage(data);
 
                 if (!string.IsNullOrEmpty(validationMessage))
                 {
+                    _leadLogic.WriteLog(data, "C2C", validationMessage);
                     return BadRequest(validationMessage);
                 }
 
