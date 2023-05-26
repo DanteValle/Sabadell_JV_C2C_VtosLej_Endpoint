@@ -4,6 +4,6 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Logic.Interface
 {
     public interface ILeadDataAcces
     {
-        Task<string> AddLead(Data lead);
+        Task<List<int>> AddLead(Data lead);
     }
 }

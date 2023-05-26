@@ -31,14 +31,20 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Controllers
         }
 
         [HttpPost("/api/Lead/AgregarLeads")]
-        public async Task<string> AgregarLeads(Data data) {
+        public async Task<IActionResult> AgregarLeads(Data data) {
             try
             {
                 //LogMessage("llego:" + data.Leads[0].NOMBRE);
 
-                var response = await _leadLogic.Agregar_lead(data);
+                string validationMessage = _leadLogic.GetValidationMessage(data);
 
-                return response;
+                if (!string.IsNullOrEmpty(validationMessage))
+                {
+                    return BadRequest(validationMessage);
+                }
+
+                await _leadLogic.AddLeads(data);
+                return Ok(string.Empty);
             }
             catch (Exception)
             {
