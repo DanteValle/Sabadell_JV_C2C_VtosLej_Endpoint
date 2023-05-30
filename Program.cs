@@ -1,5 +1,6 @@
 using FluentValidation;
 using Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces;
+using Sabadell_JV_C2C_VtosLej_Endpoint.Infrastructure;
 using Sabadell_JV_C2C_VtosLej_Endpoint.Logic;
 using Sabadell_JV_C2C_VtosLej_Endpoint.Logic.Interface;
 using Sabadell_JV_C2C_VtosLej_Endpoint.Logic.Validation;
@@ -17,6 +18,7 @@ builder.Services.AddSwaggerGen();
 
 // Agregar el validador para Data
 builder.Services.AddSingleton<IValidator<Data>, DataValidator>();
+builder.Services.AddSingleton<ILog, Log>();
 builder.Services.AddSingleton<ILeadDataAcces, LeadDataAcces>();
 builder.Services.AddSingleton<ILeadLogic, LeadLogic>();
 builder.Services.AddSingleton<IDataBaseConnectionFactory, DataBaseConnectionFactory>();
