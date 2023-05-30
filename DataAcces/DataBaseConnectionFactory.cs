@@ -8,7 +8,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
     {
         private readonly string _connectionString;
         public DataBaseConnectionFactory(IConfiguration configuration) {
-            _connectionString = configuration.GetConnectionString("conexiondb_prod");
+            _connectionString = configuration.GetConnectionString("conexiondb");
         }
 
         public IDbConnection GetDbConnection() {

@@ -2,8 +2,8 @@
 
 namespace Sabadell_JV_C2C_VtosLej_Endpoint.Logic.Interface
 {
-    public interface ILeadDataAcces
+    public interface ILog
     {
-        Task<string> AddLead(Data lead);
+        void WriteLog(Data? objCTC, string method = "", string? message = null);
     }
 }

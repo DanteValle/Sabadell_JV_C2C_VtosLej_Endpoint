@@ -7,7 +7,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.Logic.Validation
     {
         public LeadValidator() 
         {
-            RuleFor(l => l.NOMBRE).NotEmpty().MaximumLength(40).WithMessage("{PropertyName} esta vacio o supero el maximo de 40 caracteres");
+            RuleFor(l => l.NOMBRE).NotEmpty().MaximumLength(40).WithMessage("{PropertyName} supero el maximo de 40 caracteres");
             RuleFor(l => l.PRIMER_APELLIDO).MaximumLength(30).WithMessage("PRIMER APELLIDO supero el maximo de 40 caracteres");
             RuleFor(l => l.SEGUNDO_APELLIDO).MaximumLength(30).WithMessage("SEGUNDO APELLIDO supero el maximo de 40 caracteres");
             RuleFor(l => l.DNI).NotEmpty().MaximumLength(10).WithMessage("DNI esta vacio o supero el maximo de 40 caracteres");
