@@ -26,7 +26,10 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                 string DATs = "";
 
                 string response = "";
-                
+
+                var idCliente = 0;
+
+
                 using (var connection = _dataBaseConnection.GetDbConnection())
                 {
                     foreach (var item in lead.Leads)
@@ -34,27 +37,26 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
 
                         item.FECHA_ALTA = DateTime.Now;
                         var parameters = new DynamicParameters();
-                        parameters.Add("@FechaAlta", item.FECHA_ALTA, DbType.DateTime);
-                        parameters.Add("@Nombre", item.NOMBRE, DbType.String);
-                        parameters.Add("@PrimerApellido", item.PRIMER_APELLIDO, DbType.String);
-                        parameters.Add("@SegundoApellido", item.SEGUNDO_APELLIDO, DbType.String);
+                        //parameters.Add("@FechaAlta", item.FECHA_ALTA, DbType.DateTime);
+                        parameters.Add("@NOMBRE", item.NOMBRE, DbType.String);
+                        parameters.Add("@PRIMER_APELLIDO", item.PRIMER_APELLIDO, DbType.String);
+                        parameters.Add("@SEGUNDO_APELLIDO", item.SEGUNDO_APELLIDO, DbType.String);
                         parameters.Add("@DNI", item.DNI, DbType.String);
-                        parameters.Add("@Producto", item.PRODUCTO, DbType.String);
-                        parameters.Add("@Telefono", item.TELEFONO, DbType.String);
-                        parameters.Add("@Idioma", item.IDIOMA, DbType.String);
-                        parameters.Add("@MesDelVencimiento", item.MES_DEL_VENCIMIENTO, DbType.String);
-                        parameters.Add("@Departamento", item.DEPARTAMENTO, DbType.String);
-                        parameters.Add("@idLog", DbType.Int32, direction: ParameterDirection.Output);
-
-                        await connection.ExecuteAsync("WS_C2C_VtoLej_LOG ", parameters, commandType: CommandType.StoredProcedure);
-                        int idCliente = parameters.Get<int>("@idLog");
-                        _log.WriteLog(null, "INFO", " Tablas de negocio alimentadas " + idCliente);
-
-                       // DATs = await GenerateDat(idCliente);
-                        //ProcessLoadAndUpdateMarkers(idCliente, DATs);
+                        parameters.Add("@PRODUCTO", item.PRODUCTO, DbType.String);
+                        parameters.Add("@TELEFONO", item.TELEFONO, DbType.String);
+                        parameters.Add("@IDIOMA", item.IDIOMA, DbType.String);
+                        parameters.Add("@MES_DEL_VENCIMIENTO", item.MES_DEL_VENCIMIENTO, DbType.String);
+                        parameters.Add("@DEPARTAMENTO", item.DEPARTAMENTO, DbType.String);
+                      //  parameters.Add("@id_cliente_salida", DbType.Int32, direction: ParameterDirection.Output);
+                  
+                        //await connection.ExecuteAsync("WSCargarMuestra ", parameters, commandType: CommandType.StoredProcedure);
+                        //int idCliente = parameters.Get<int>("@id_cliente_salida");
+                        idCliente = await connection.QuerySingleAsync<int>("dbo.WSCargarMuestra", parameters, commandType: CommandType.StoredProcedure);
                         
-
                     }
+                    _log.WriteLog(null, "INFO", " Tablas de negocio alimentadas " + idCliente);
+                    DATs = await GenerateDat();
+                    ProcessLoadAndUpdateMarkers(idCliente, DATs);
                     return response;
 
                 }
@@ -70,31 +72,52 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
         ///aunque le estamos pasando el idCliente al procedure, no se esta utilizando porque hacemos otro cruce que nos devuelve todos los dats de los registros que no estan en la tabla ct
         /// </summary>
         /// <param name="idCliente"></param>
-        public async Task<string> GenerateDat(int idCliente)
+        public async Task<string> GenerateDat()
         {
             try
             {
-                
-                using (var con = _dataBaseConnection.GetDbConnection())
-                {
+
+                //using (var con = _dataBaseConnection.GetDbConnection())
+                //{
+                //    //NO VENTAS
+                //    var results = await con.QueryAsync<string>("dbo.WSGenerarDAT", commandType: CommandType.StoredProcedure);
+
+                //    var builder = new StringBuilder();
+
+                //    foreach (var result in results)
+                //    {
+                //        if (!string.IsNullOrEmpty(result))
+                //        {
+                //            builder.AppendLine(result);
+                //        }
+                //    }
+                //    string DATs = builder.ToString();
+                //    _log.WriteLog(null, "INFO", " Generar DAT recuperado " + DATs);
+                //    return DATs;
+
+                //}
+                using (SqlConnection? con = _dataBaseConnection.GetDbConnection() as SqlConnection)
+                { 
                     //NO VENTAS
-                    var results = await con.QueryAsync<string>("dbo.WSGenerarDat", new { idCliente }, commandType: CommandType.StoredProcedure);
-
-                    var builder = new StringBuilder();
-
-                    foreach (var result in results)
+                    using (SqlCommand com = new SqlCommand())
                     {
-                        if (!string.IsNullOrEmpty(result))
+                        com.Connection = con;
+                        com.CommandType = System.Data.CommandType.StoredProcedure;
+                        com.CommandText = "dbo.WSGenerarDAT";
+                        SqlDataReader reader = await com.ExecuteReaderAsync();
+                        string DATs = "";
+                        while (reader.Read())
                         {
-                            builder.AppendLine(result);
+                            if (reader.GetString(0) != null)
+                            {
+                                DATs += reader.GetString(0) + "\r\n";
+                            }
                         }
+                        _log.WriteLog(null, "INFO", " Generar DAT recuperado " + DATs);
+                        return DATs;
                     }
-                    string DATs = builder.ToString();
-                    _log.WriteLog(null, "INFO", " Generar DAT recuperado " + DATs);
-                    return DATs;
-                    
                 }
-                
+
             }
             catch (Exception)
             {
@@ -110,7 +133,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
             if (DATs.Length > 0)
             {
                 String ruta = AppDomain.CurrentDomain.BaseDirectory + (@"Cargas\");
-                string nomFicheroDat = idCliente + "_SABADELL_JV_C2C_" + DateTime.Now.Day.ToString() + "_" + DateTime.Now.Month.ToString() + "_" + DateTime.Now.Year.ToString() + "_" + DateTime.Now.Hour.ToString() + "_" + DateTime.Now.Minute.ToString() + "_" + DateTime.Now.Second.ToString() + "_" + DateTime.Now.Millisecond.ToString() + ".dat";
+                string nomFicheroDat = idCliente + "Sabadell_JV_C2C_VtosLej_Endpoint" + DateTime.Now.Day.ToString() + "_" + DateTime.Now.Month.ToString() + "_" + DateTime.Now.Year.ToString() + "_" + DateTime.Now.Hour.ToString() + "_" + DateTime.Now.Minute.ToString() + "_" + DateTime.Now.Second.ToString() + "_" + DateTime.Now.Millisecond.ToString() + ".dat";
                 string nomFicheroConRuta = ruta + nomFicheroDat;
                 StreamWriter sw = new StreamWriter(nomFicheroConRuta, true);
                 sw.Write(DATs);
@@ -119,7 +142,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                 try
                 {
                     //Le ponemos un nombre al fichero .bat que va a contener los comandos utilizados para realizar la carga en ALTITUDE.
-                    string nomFicheroBat = idCliente + "_SABADELL_JV_C2C_" + DateTime.Now.Day.ToString() + "_" + DateTime.Now.Month.ToString() + "_" + DateTime.Now.Year.ToString() + "_" + DateTime.Now.Hour.ToString() + "_" + DateTime.Now.Minute.ToString() + "_" + DateTime.Now.Second.ToString() + "_" + DateTime.Now.Millisecond.ToString();
+                    string nomFicheroBat = idCliente + "Sabadell_JV_C2C_VtosLej_Test" + DateTime.Now.Day.ToString() + "_" + DateTime.Now.Month.ToString() + "_" + DateTime.Now.Year.ToString() + "_" + DateTime.Now.Hour.ToString() + "_" + DateTime.Now.Minute.ToString() + "_" + DateTime.Now.Second.ToString() + "_" + DateTime.Now.Millisecond.ToString();
                     //Establecemos la localización del fichero, la ruta.
                     string BatLocation = AppDomain.CurrentDomain.BaseDirectory + (@"Cargas\Carga_" + nomFicheroBat + ".bat");
 
@@ -135,8 +158,9 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                     //sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f SABADELL_JV_C2C.TYP -i " + nomFicheroDat + " -c");// + "\r\n");// + "\r\n");
 
                     //TEST - comentar
-                    sw2.Write("uciLoader\\uciLoader.exe -m dsuci0401:1500 -l uciCarga:uciCarga -f SABADELL_JV_C2C.TYP -i " + nomFicheroDat + " -c");// + "\r\n");// + "\r\n");
-
+                    //sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej.TYP -i " + nomFicheroDat + " -c");
+                    sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej_Test.TYP -i " + nomFicheroDat + " -c ");// + "\r\n");// + "\r\n");
+                    //sw2.Write("pause");
                     sw2.WriteLine();
 
                     //Cerramos los objetos relacionados con ficheros.
@@ -160,8 +184,8 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                     Thread.Sleep(1000);
                     using (var connection = _dataBaseConnection.GetDbConnection())
                     {
-                        var sql = "[dbo].[WSActualizarEasycodes]";
-                        var returnValue = connection.Execute(sql, commandType: CommandType.StoredProcedure);
+                        //var sql = "[dbo].[WSActualizarEasycodes]";
+                        //var returnValue = connection.Execute(sql, commandType: CommandType.StoredProcedure);
 
                     }
                 }
