@@ -34,23 +34,24 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
 
                         item.FECHA_ALTA = DateTime.Now;
                         var parameters = new DynamicParameters();
-                        parameters.Add("@FechaAlta", item.FECHA_ALTA, DbType.DateTime);
-                        parameters.Add("@Nombre", item.NOMBRE, DbType.String);
-                        parameters.Add("@PrimerApellido", item.PRIMER_APELLIDO, DbType.String);
-                        parameters.Add("@SegundoApellido", item.SEGUNDO_APELLIDO, DbType.String);
+                        //parameters.Add("@FechaAlta", item.FECHA_ALTA, DbType.DateTime);
+                        parameters.Add("@NOMBRE", item.NOMBRE, DbType.String);
+                        parameters.Add("@PRIMER_APELLIDO", item.PRIMER_APELLIDO, DbType.String);
+                        parameters.Add("@SEGUNDO_APELLIDO", item.SEGUNDO_APELLIDO, DbType.String);
                         parameters.Add("@DNI", item.DNI, DbType.String);
-                        parameters.Add("@Producto", item.PRODUCTO, DbType.String);
-                        parameters.Add("@Telefono", item.TELEFONO, DbType.String);
-                        parameters.Add("@Idioma", item.IDIOMA, DbType.String);
-                        parameters.Add("@MesDelVencimiento", item.MES_DEL_VENCIMIENTO, DbType.String);
-                        parameters.Add("@Departamento", item.DEPARTAMENTO, DbType.String);
-                        parameters.Add("@idLog", DbType.Int32, direction: ParameterDirection.Output);
-
-                        await connection.ExecuteAsync("WS_C2C_VtoLej_LOG ", parameters, commandType: CommandType.StoredProcedure);
-                        int idCliente = parameters.Get<int>("@idLog");
+                        parameters.Add("@PRODUCTO", item.PRODUCTO, DbType.String);
+                        parameters.Add("@TELEFONO", item.TELEFONO, DbType.String);
+                        parameters.Add("@IDIOMA", item.IDIOMA, DbType.String);
+                        parameters.Add("@MES_DEL_VENCIMIENTO", item.MES_DEL_VENCIMIENTO, DbType.String);
+                        parameters.Add("@DEPARTAMENTO", item.DEPARTAMENTO, DbType.String);
+                      //  parameters.Add("@id_cliente_salida", DbType.Int32, direction: ParameterDirection.Output);
+                  
+                        //await connection.ExecuteAsync("WSCargarMuestra ", parameters, commandType: CommandType.StoredProcedure);
+                        //int idCliente = parameters.Get<int>("@id_cliente_salida");
+                        var idCliente = await connection.QuerySingleAsync<int>("dbo.WSCargarMuestra", parameters, commandType: CommandType.StoredProcedure);
                         _log.WriteLog(null, "INFO", " Tablas de negocio alimentadas " + idCliente);
 
-                       // DATs = await GenerateDat(idCliente);
+                       DATs = await GenerateDat();
                         //ProcessLoadAndUpdateMarkers(idCliente, DATs);
                         
 
@@ -70,31 +71,52 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
         ///aunque le estamos pasando el idCliente al procedure, no se esta utilizando porque hacemos otro cruce que nos devuelve todos los dats de los registros que no estan en la tabla ct
         /// </summary>
         /// <param name="idCliente"></param>
-        public async Task<string> GenerateDat(int idCliente)
+        public async Task<string> GenerateDat()
         {
             try
             {
-                
-                using (var con = _dataBaseConnection.GetDbConnection())
-                {
+
+                //using (var con = _dataBaseConnection.GetDbConnection())
+                //{
+                //    //NO VENTAS
+                //    var results = await con.QueryAsync<string>("dbo.WSGenerarDAT", commandType: CommandType.StoredProcedure);
+
+                //    var builder = new StringBuilder();
+
+                //    foreach (var result in results)
+                //    {
+                //        if (!string.IsNullOrEmpty(result))
+                //        {
+                //            builder.AppendLine(result);
+                //        }
+                //    }
+                //    string DATs = builder.ToString();
+                //    _log.WriteLog(null, "INFO", " Generar DAT recuperado " + DATs);
+                //    return DATs;
+
+                //}
+                using (SqlConnection? con = _dataBaseConnection.GetDbConnection() as SqlConnection)
+                { 
                     //NO VENTAS
-                    var results = await con.QueryAsync<string>("dbo.WSGenerarDat", new { idCliente }, commandType: CommandType.StoredProcedure);
-
-                    var builder = new StringBuilder();
-
-                    foreach (var result in results)
+                    using (SqlCommand com = new SqlCommand())
                     {
-                        if (!string.IsNullOrEmpty(result))
+                        com.Connection = con;
+                        com.CommandType = System.Data.CommandType.StoredProcedure;
+                        com.CommandText = "dbo.WSGenerarDAT";
+                        SqlDataReader reader = await com.ExecuteReaderAsync();
+                        string DATs = "";
+                        while (reader.Read())
                         {
-                            builder.AppendLine(result);
+                            if (reader.GetString(0) != null)
+                            {
+                                DATs += reader.GetString(0) + "\r\n";
+                            }
                         }
+                        _log.WriteLog(null, "INFO", " Generar DAT recuperado " + DATs);
+                        return DATs;
                     }
-                    string DATs = builder.ToString();
-                    _log.WriteLog(null, "INFO", " Generar DAT recuperado " + DATs);
-                    return DATs;
-                    
                 }
-                
+
             }
             catch (Exception)
             {
