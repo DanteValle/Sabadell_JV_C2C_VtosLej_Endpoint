@@ -26,7 +26,10 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                 string DATs = "";
 
                 string response = "";
-                
+
+                var idCliente = 0;
+
+
                 using (var connection = _dataBaseConnection.GetDbConnection())
                 {
                     foreach (var item in lead.Leads)
@@ -48,14 +51,12 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                   
                         //await connection.ExecuteAsync("WSCargarMuestra ", parameters, commandType: CommandType.StoredProcedure);
                         //int idCliente = parameters.Get<int>("@id_cliente_salida");
-                        var idCliente = await connection.QuerySingleAsync<int>("dbo.WSCargarMuestra", parameters, commandType: CommandType.StoredProcedure);
-                        _log.WriteLog(null, "INFO", " Tablas de negocio alimentadas " + idCliente);
 
-                       DATs = await GenerateDat();
-                        //ProcessLoadAndUpdateMarkers(idCliente, DATs);
-                        
-
+                        idCliente = await connection.QuerySingleAsync<int>("dbo.WSCargarMuestra", parameters, commandType: CommandType.StoredProcedure)    
                     }
+                    _log.WriteLog(null, "INFO", " Tablas de negocio alimentadas " + idCliente);
+                    DATs = await GenerateDat();
+                    ProcessLoadAndUpdateMarkers(idCliente, DATs);
                     return response;
 
                 }
@@ -132,7 +133,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
             if (DATs.Length > 0)
             {
                 String ruta = AppDomain.CurrentDomain.BaseDirectory + (@"Cargas\");
-                string nomFicheroDat = idCliente + "_SABADELL_JV_C2C_" + DateTime.Now.Day.ToString() + "_" + DateTime.Now.Month.ToString() + "_" + DateTime.Now.Year.ToString() + "_" + DateTime.Now.Hour.ToString() + "_" + DateTime.Now.Minute.ToString() + "_" + DateTime.Now.Second.ToString() + "_" + DateTime.Now.Millisecond.ToString() + ".dat";
+                string nomFicheroDat = idCliente + "Sabadell_JV_C2C_VtosLej_Endpoint" + DateTime.Now.Day.ToString() + "_" + DateTime.Now.Month.ToString() + "_" + DateTime.Now.Year.ToString() + "_" + DateTime.Now.Hour.ToString() + "_" + DateTime.Now.Minute.ToString() + "_" + DateTime.Now.Second.ToString() + "_" + DateTime.Now.Millisecond.ToString() + ".dat";
                 string nomFicheroConRuta = ruta + nomFicheroDat;
                 StreamWriter sw = new StreamWriter(nomFicheroConRuta, true);
                 sw.Write(DATs);
@@ -141,7 +142,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                 try
                 {
                     //Le ponemos un nombre al fichero .bat que va a contener los comandos utilizados para realizar la carga en ALTITUDE.
-                    string nomFicheroBat = idCliente + "_SABADELL_JV_C2C_" + DateTime.Now.Day.ToString() + "_" + DateTime.Now.Month.ToString() + "_" + DateTime.Now.Year.ToString() + "_" + DateTime.Now.Hour.ToString() + "_" + DateTime.Now.Minute.ToString() + "_" + DateTime.Now.Second.ToString() + "_" + DateTime.Now.Millisecond.ToString();
+                    string nomFicheroBat = idCliente + "Sabadell_JV_C2C_VtosLej_Test" + DateTime.Now.Day.ToString() + "_" + DateTime.Now.Month.ToString() + "_" + DateTime.Now.Year.ToString() + "_" + DateTime.Now.Hour.ToString() + "_" + DateTime.Now.Minute.ToString() + "_" + DateTime.Now.Second.ToString() + "_" + DateTime.Now.Millisecond.ToString();
                     //Establecemos la localización del fichero, la ruta.
                     string BatLocation = AppDomain.CurrentDomain.BaseDirectory + (@"Cargas\Carga_" + nomFicheroBat + ".bat");
 
@@ -157,8 +158,9 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                     //sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f SABADELL_JV_C2C.TYP -i " + nomFicheroDat + " -c");// + "\r\n");// + "\r\n");
 
                     //TEST - comentar
-                    sw2.Write("uciLoader\\uciLoader.exe -m dsuci0401:1500 -l uciCarga:uciCarga -f SABADELL_JV_C2C.TYP -i " + nomFicheroDat + " -c");// + "\r\n");// + "\r\n");
-
+                    //sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej.TYP -i " + nomFicheroDat + " -c");
+                    sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej_Test.TYP -i " + nomFicheroDat + " -c ");// + "\r\n");// + "\r\n");
+                    //sw2.Write("pause");
                     sw2.WriteLine();
 
                     //Cerramos los objetos relacionados con ficheros.
@@ -182,8 +184,8 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                     Thread.Sleep(1000);
                     using (var connection = _dataBaseConnection.GetDbConnection())
                     {
-                        var sql = "[dbo].[WSActualizarEasycodes]";
-                        var returnValue = connection.Execute(sql, commandType: CommandType.StoredProcedure);
+                        //var sql = "[dbo].[WSActualizarEasycodes]";
+                        //var returnValue = connection.Execute(sql, commandType: CommandType.StoredProcedure);
 
                     }
                 }
