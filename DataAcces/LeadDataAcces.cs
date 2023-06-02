@@ -29,6 +29,8 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
 
                 var idCliente = 0;
 
+                List<int> id_clientes = new List<int>();
+
 
                 using (var connection = _dataBaseConnection.GetDbConnection())
                 {
@@ -52,10 +54,11 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                         //await connection.ExecuteAsync("WSCargarMuestra ", parameters, commandType: CommandType.StoredProcedure);
                         //int idCliente = parameters.Get<int>("@id_cliente_salida");
                         idCliente = await connection.QuerySingleAsync<int>("dbo.WSCargarMuestra", parameters, commandType: CommandType.StoredProcedure);
-                        
+                        id_clientes.Add(idCliente);
                     }
+                    string cadena_ids = string.Join(",", id_clientes);
                     _log.WriteLog(null, "INFO", " Tablas de negocio alimentadas " + idCliente);
-                    DATs = await GenerateDat();
+                    DATs = await GenerateDat(cadena_ids);
                     ProcessLoadAndUpdateMarkers(idCliente, DATs);
                     return response;
 
@@ -72,30 +75,12 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
         ///aunque le estamos pasando el idCliente al procedure, no se esta utilizando porque hacemos otro cruce que nos devuelve todos los dats de los registros que no estan en la tabla ct
         /// </summary>
         /// <param name="idCliente"></param>
-        public async Task<string> GenerateDat()
+        public async Task<string> GenerateDat(string ids)
         {
             try
             {
 
-                //using (var con = _dataBaseConnection.GetDbConnection())
-                //{
-                //    //NO VENTAS
-                //    var results = await con.QueryAsync<string>("dbo.WSGenerarDAT", commandType: CommandType.StoredProcedure);
-
-                //    var builder = new StringBuilder();
-
-                //    foreach (var result in results)
-                //    {
-                //        if (!string.IsNullOrEmpty(result))
-                //        {
-                //            builder.AppendLine(result);
-                //        }
-                //    }
-                //    string DATs = builder.ToString();
-                //    _log.WriteLog(null, "INFO", " Generar DAT recuperado " + DATs);
-                //    return DATs;
-
-                //}
+                
                 using (SqlConnection? con = _dataBaseConnection.GetDbConnection() as SqlConnection)
                 { 
                     //NO VENTAS
@@ -104,6 +89,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                         com.Connection = con;
                         com.CommandType = System.Data.CommandType.StoredProcedure;
                         com.CommandText = "dbo.WSGenerarDAT";
+                        com.Parameters.AddWithValue("@listaIdClientes", ids);
                         SqlDataReader reader = await com.ExecuteReaderAsync();
                         string DATs = "";
                         while (reader.Read())
