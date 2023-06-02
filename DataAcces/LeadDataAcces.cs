@@ -53,6 +53,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                   
                         //await connection.ExecuteAsync("WSCargarMuestra ", parameters, commandType: CommandType.StoredProcedure);
                         //int idCliente = parameters.Get<int>("@id_cliente_salida");
+
                         idCliente = await connection.QuerySingleAsync<int>("dbo.WSCargarMuestra", parameters, commandType: CommandType.StoredProcedure);
                         id_clientes.Add(idCliente);
                     }
