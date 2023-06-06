@@ -10,17 +10,17 @@ using System.Text;
 
 namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
 {
-    
-    public class LeadDataAcces: ILeadDataAcces
+
+    public class LeadDataAcces : ILeadDataAcces
     {
         private readonly IDataBaseConnectionFactory _dataBaseConnection;
         private readonly ILog _log;
 
-        public LeadDataAcces(IDataBaseConnectionFactory dataBaseConnection,ILog log) { 
+        public LeadDataAcces(IDataBaseConnectionFactory dataBaseConnection, ILog log) {
             _dataBaseConnection = dataBaseConnection;
             _log = log;
         }
-        public async Task<string>AddLead(Data lead) {
+        public async Task<string> AddLead(Data lead) {
             try
             {
                 string DATs = "";
@@ -39,7 +39,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
 
                         item.FECHA_ALTA = DateTime.Now;
                         var parameters = new DynamicParameters();
-                        //parameters.Add("@FechaAlta", item.FECHA_ALTA, DbType.DateTime);
+
                         parameters.Add("@NOMBRE", item.NOMBRE, DbType.String);
                         parameters.Add("@PRIMER_APELLIDO", item.PRIMER_APELLIDO, DbType.String);
                         parameters.Add("@SEGUNDO_APELLIDO", item.SEGUNDO_APELLIDO, DbType.String);
@@ -49,18 +49,16 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                         parameters.Add("@IDIOMA", item.IDIOMA, DbType.String);
                         parameters.Add("@MES_DEL_VENCIMIENTO", item.MES_DEL_VENCIMIENTO, DbType.String);
                         parameters.Add("@DEPARTAMENTO", item.DEPARTAMENTO, DbType.String);
-                      //  parameters.Add("@id_cliente_salida", DbType.Int32, direction: ParameterDirection.Output);
-                  
-                        //await connection.ExecuteAsync("WSCargarMuestra ", parameters, commandType: CommandType.StoredProcedure);
-                        //int idCliente = parameters.Get<int>("@id_cliente_salida");
 
                         idCliente = await connection.QuerySingleAsync<int>("dbo.WSCargarMuestra", parameters, commandType: CommandType.StoredProcedure);
                         id_clientes.Add(idCliente);
                     }
-                    string cadena_ids = string.Join(",", id_clientes);
+                    var cadena_ids = GenerarListaIds(id_clientes);
+
                     _log.WriteLog(null, "INFO", " Tablas de negocio alimentadas " + idCliente);
                     DATs = await GenerateDat(cadena_ids);
                     ProcessLoadAndUpdateMarkers(idCliente, DATs);
+                    ActualizarEasycodes(cadena_ids);
                     return response;
 
                 }
@@ -81,9 +79,9 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
             try
             {
 
-                
+
                 using (SqlConnection? con = _dataBaseConnection.GetDbConnection() as SqlConnection)
-                { 
+                {
                     //NO VENTAS
                     using (SqlCommand com = new SqlCommand())
                     {
@@ -141,13 +139,10 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                     sw2.Write("E:" + "\r\n");
                     sw2.Write("cd " + AppDomain.CurrentDomain.BaseDirectory + (@"Cargas\") + "\r\n");
 
-                    //PRODUCCION
-                    //sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f SABADELL_JV_C2C.TYP -i " + nomFicheroDat + " -c");// + "\r\n");// + "\r\n");
 
-                    //TEST - comentar
+                    //TEST - cambiar el el tipe de test a produccion
                     //sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej.TYP -i " + nomFicheroDat + " -c");
                     sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej_Test.TYP -i " + nomFicheroDat + " -c ");// + "\r\n");// + "\r\n");
-                    //sw2.Write("pause");
                     sw2.WriteLine();
 
                     //Cerramos los objetos relacionados con ficheros.
@@ -162,25 +157,10 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                 catch (Exception e)
                 {
                     _log.WriteLog(null, "ERROR", " Error al realizar la carga en Altitude desde el método 'EjecutarCarga': " + e.Message);
-                   
+
                 }
 
-                try
-                {
-                    //ActualizarEasyCodes
-                    Thread.Sleep(1000);
-                    using (var connection = _dataBaseConnection.GetDbConnection())
-                    {
-                        //var sql = "[dbo].[WSActualizarEasycodes]";
-                        //var returnValue = connection.Execute(sql, commandType: CommandType.StoredProcedure);
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _log.WriteLog(null, "ERROR", " Error al ejecutar el SP WSActualizarEasycodes ': " + ex.Message);
-                    throw;
-                }
+                
             }
         }
 
@@ -198,7 +178,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                 _log.WriteLog(null, "INFO", string.Concat(" Start process Altitud for: ", pathExecutable));
                 Process process_Altitud = Process.Start(startInfo);
 
-                //process.WaitForExit();
+
                 while (!process_Altitud.HasExited)
                 {
                     Thread.Sleep(100);
@@ -207,6 +187,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
                 _log.WriteLog(null, "INFO", string.Concat(" End process Altitud with code: ", process_Altitud.ExitCode));
 
                 return 1;
+
             }
             catch (Win32Exception ex)
             {
@@ -224,6 +205,33 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
             {
                 _log.WriteLog(null, "ERROR", " In RunProcessAsAdmin: " + ex.Message);
                 return -2;
+            }
+        }
+
+        public string GenerarListaIds(List<int> cadena_id) {
+            string cadena_ids = string.Join(",", cadena_id);
+            return cadena_ids;
+        }
+        public void ActualizarEasycodes(string cadena_ids) {
+            try
+            {
+                //ActualizarEasyCodes pasar por parametro el id cliente
+                Thread.Sleep(1000);
+                using (SqlConnection? con = _dataBaseConnection.GetDbConnection() as SqlConnection)
+                {
+                    
+                    var parameters = new DynamicParameters();
+                    parameters.Add("@listaIdClientes", cadena_ids, DbType.String);
+                   // parameters.Add("@idCliente", DbType.Int64, direction: ParameterDirection.Output);
+                    con.Execute("dbo.WSActualizarEasycodes", parameters, commandType: CommandType.StoredProcedure);
+                  //  var Id_s = parameters.Get<int>("@idCliente");
+
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.WriteLog(null, "ERROR", " Error al ejecutar el SP WSActualizarEasycodes ': " + ex.Message);
+                throw;
             }
         }
 
