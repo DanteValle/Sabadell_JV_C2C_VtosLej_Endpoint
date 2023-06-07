@@ -142,7 +142,7 @@ namespace Sabadell_JV_C2C_VtosLej_Endpoint.DataAcces
 
                     //TEST - cambiar el el tipe de test a produccion
                     //sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej.TYP -i " + nomFicheroDat + " -c");
-                    sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej_Test.TYP -i " + nomFicheroDat + " -c ");// + "\r\n");// + "\r\n");
+                    sw2.Write("uciLoader\\uciLoader.exe -m uci0401:1500 -l uciCarga:uciCarga -f Sabadell_JV_C2C_VtosLej_Prod.TYP -i " + nomFicheroDat + " -c ");// + "\r\n");// + "\r\n");
                     sw2.WriteLine();
 
                     //Cerramos los objetos relacionados con ficheros.
